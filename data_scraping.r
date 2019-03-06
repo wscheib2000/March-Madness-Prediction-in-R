@@ -1,10 +1,10 @@
 library(rvest)
 
 #Sets working directory
-setwd('C:/Users/student/Documents/RProjects/March Madness')
+setwd('C:/Users/student/Documents/March-Madness-Prediction-in-R')
 
 #Constants
-years <- c(2002:2019)
+years <- c(2002:2018)
 team_data_names <- c('year', 'team', 'adj_eff_margin', 'adj_off_eff', 'adj_def_eff', 'pos_per_40', 'luck', 'sos', 'opp_adj_off_eff', 'opp_adj_def_eff')
 matchups_names <- c('team', 'score1', 'opponent', 'score2')
 scorer_names <- c('team_ppg', 'leader_ppg')
@@ -188,84 +188,84 @@ for(i in c(1:nrow(extension_2018))){
 ###LEADING SCORER###
 
 #Initializes data.frame into which data will be scraped
-leading_scorers <- NULL
+# leading_scorers <- NULL
 
-#Scrapes data into data.frame
-for(y in years){
-  for(t in unique(team_data[team_data$year == y, 'team'])){
-    #Fixes team name so it matches what should be in the url
-    t_useable <- sub('USC', 'Southern California', t)
-    t_useable <- sub('^Penn$', 'Pennsylvania', t_useable)
-    t_useable <- sub('Bowling Green', 'Bowling Green State', t_useable)
-    t_useable <- sub('BYU', 'Brigham Young', t_useable)
-    t_useable <- sub('UNC ', 'North Carolina ', t_useable)
-    t_useable <- sub('LSU', 'Louisiana State', t_useable)
-    t_useable <- sub('St. John\'s', 'St. John\'s NY', t_useable)
-    t_useable <- sub('Saint Mary\'s', 'Saint Mary\'s CA', t_useable)
-    t_useable <- sub('UC ', 'California ', t_useable)
-    t_useable <- sub('UT ', 'Texas ', t_useable)
-    t_useable <- sub('UNLV', 'Nevada Las Vegas', t_useable)
-    t_useable <- sub('UAB', 'Alabama Birmingham', t_useable)
-    t_useable <- sub('UCF', 'Central Florida', t_useable)
-    t_useable <- sub('Detroit', 'Detroit Mercy', t_useable)
-    t_useable <- sub('SMU', 'Southern Methodist', t_useable)
-    t_useable <- sub('TCU', 'Texas Christian', t_useable)
-    t_useable <- sub('UTEP', 'Texas El Paso', t_useable)
-    t_useable <- sub('UMBC', 'Maryland Baltimore County', t_useable)
-    t_useable <- sub('Southwest ', '', t_useable)
-    t_useable <- sub('VCU', 'Virginia Commonwealth', t_useable)
-    t_useable <- sub('FIU', 'Florida International', t_useable)
-    t_useable <- sub('VMI', 'Virginia Military Institute', t_useable)
-    t_useable <- sub('UTSA', 'Texas San Antonio', t_useable)
-    t_useable <- sub('St\\. Francis PA', 'Saint Francis PA', t_useable)
-    t_useable <- sub('UMKC', 'Missouri Kansas City', t_useable)
-    t_useable <- sub('Loyola Chicago', 'Loyola IL', t_useable)
-    t_useable <- sub('Corpus Chris', 'Corpus Christi', t_useable)
-    t_useable <- sub('Utah Valley St\\.', 'Utah Valley', t_useable)
-    t_useable <- sub('Prairie View A&M', 'Prairie View', t_useable)
-    t_useable <- sub('Albany', 'Albany NY', t_useable)
-    t_useable <- sub('LIU Brooklyn', 'Long Island University', t_useable)
-    t_useable <- sub('Southern Miss', 'Southern Mississippi', t_useable)
-    t_useable <- sub('Central Connecticut', 'Central Connecticut State', t_useable)
-    t_useable <- sub('The ', '', t_useable)
-    t_useable <- sub('\'', '', t_useable)
-    t_useable <- sub('\\.', '', t_useable)
-    t_useable <- sub('\\& *', '', t_useable)
-    t_useable <- sub('Cal St', 'Cal State', t_useable)
-    t_useable <- sub('Grambling St', 'Grambling', t_useable)
-    t_useable <- sub('Middle Tennessee St', 'Middle Tennessee', t_useable)
-    t_useable <- gsub(' ', '-', t_useable)
-    t_useable <- sub('St$', 'State', t_useable)
-    t_useable <- tolower(t_useable)
+# #Scrapes data into data.frame
+# for(y in years){
+#   for(t in unique(team_data[team_data$year == y, 'team'])){
+#     #Fixes team name so it matches what should be in the url
+#     t_useable <- sub('USC', 'Southern California', t)
+#     t_useable <- sub('^Penn$', 'Pennsylvania', t_useable)
+#     t_useable <- sub('Bowling Green', 'Bowling Green State', t_useable)
+#     t_useable <- sub('BYU', 'Brigham Young', t_useable)
+#     t_useable <- sub('UNC ', 'North Carolina ', t_useable)
+#     t_useable <- sub('LSU', 'Louisiana State', t_useable)
+#     t_useable <- sub('St. John\'s', 'St. John\'s NY', t_useable)
+#     t_useable <- sub('Saint Mary\'s', 'Saint Mary\'s CA', t_useable)
+#     t_useable <- sub('UC ', 'California ', t_useable)
+#     t_useable <- sub('UT ', 'Texas ', t_useable)
+#     t_useable <- sub('UNLV', 'Nevada Las Vegas', t_useable)
+#     t_useable <- sub('UAB', 'Alabama Birmingham', t_useable)
+#     t_useable <- sub('UCF', 'Central Florida', t_useable)
+#     t_useable <- sub('Detroit', 'Detroit Mercy', t_useable)
+#     t_useable <- sub('SMU', 'Southern Methodist', t_useable)
+#     t_useable <- sub('TCU', 'Texas Christian', t_useable)
+#     t_useable <- sub('UTEP', 'Texas El Paso', t_useable)
+#     t_useable <- sub('UMBC', 'Maryland Baltimore County', t_useable)
+#     t_useable <- sub('Southwest ', '', t_useable)
+#     t_useable <- sub('VCU', 'Virginia Commonwealth', t_useable)
+#     t_useable <- sub('FIU', 'Florida International', t_useable)
+#     t_useable <- sub('VMI', 'Virginia Military Institute', t_useable)
+#     t_useable <- sub('UTSA', 'Texas San Antonio', t_useable)
+#     t_useable <- sub('St\\. Francis PA', 'Saint Francis PA', t_useable)
+#     t_useable <- sub('UMKC', 'Missouri Kansas City', t_useable)
+#     t_useable <- sub('Loyola Chicago', 'Loyola IL', t_useable)
+#     t_useable <- sub('Corpus Chris', 'Corpus Christi', t_useable)
+#     t_useable <- sub('Utah Valley St\\.', 'Utah Valley', t_useable)
+#     t_useable <- sub('Prairie View A&M', 'Prairie View', t_useable)
+#     t_useable <- sub('Albany', 'Albany NY', t_useable)
+#     t_useable <- sub('LIU Brooklyn', 'Long Island University', t_useable)
+#     t_useable <- sub('Southern Miss', 'Southern Mississippi', t_useable)
+#     t_useable <- sub('Central Connecticut', 'Central Connecticut State', t_useable)
+#     t_useable <- sub('The ', '', t_useable)
+#     t_useable <- sub('\'', '', t_useable)
+#     t_useable <- sub('\\.', '', t_useable)
+#     t_useable <- sub('\\& *', '', t_useable)
+#     t_useable <- sub('Cal St', 'Cal State', t_useable)
+#     t_useable <- sub('Grambling St', 'Grambling', t_useable)
+#     t_useable <- sub('Middle Tennessee St', 'Middle Tennessee', t_useable)
+#     t_useable <- gsub(' ', '-', t_useable)
+#     t_useable <- sub('St$', 'State', t_useable)
+#     t_useable <- tolower(t_useable)
     
-    #Builds link and gets html code
-    link <- paste0('https://www.sports-reference.com/cbb/schools/', t_useable, '/', y, '.html')
-    download.file(link, destfile = 'scraped_page.html', quiet=TRUE)
-    webpage <- read_html('scraped_page.html')
+#     #Builds link and gets html code
+#     link <- paste0('https://www.sports-reference.com/cbb/schools/', t_useable, '/', y, '.html')
+#     download.file(link, destfile = 'scraped_page.html', quiet=TRUE)
+#     webpage <- read_html('scraped_page.html')
     
-    #Reads first round matchups and their scores, converts them to text, and converts the resultant character vector to a data.frame
-    temp_data_html <- html_nodes(webpage, '#team_stats tr:nth-child(1) .right:nth-child(25) , #per_game tr:nth-child(1) .right:nth-child(26)')
-    temp_data <- html_text(temp_data_html)
-    temp_data <- data.frame(temp_data, stringsAsFactors = FALSE)
+#     #Reads first round matchups and their scores, converts them to text, and converts the resultant character vector to a data.frame
+#     temp_data_html <- html_nodes(webpage, '#team_stats tr:nth-child(1) .right:nth-child(25) , #per_game tr:nth-child(1) .right:nth-child(26)')
+#     temp_data <- html_text(temp_data_html)
+#     temp_data <- data.frame(temp_data, stringsAsFactors = FALSE)
     
-    #Rearranges values from 1 column to 4 columns and adds names
-    for(i in c(0:(nrow(temp_data) - 1))){
-      temp_data[(i %/% 2) + 1, (i %% 2) + 1] <- temp_data[i + 1, 1]
-    }
-    names(temp_data) <- scorer_names
+#     #Rearranges values from 1 column to 4 columns and adds names
+#     for(i in c(0:(nrow(temp_data) - 1))){
+#       temp_data[(i %/% 2) + 1, (i %% 2) + 1] <- temp_data[i + 1, 1]
+#     }
+#     names(temp_data) <- scorer_names
     
-    #Adds year column, calculates point_diff colum, removes score columns, rearranges columns, and removes excess rows
-    temp_data$year <- y
-    temp_data$team <- t
-    temp_data <- transform(temp_data, team_ppg = as.numeric(team_ppg))
-    temp_data <- transform(temp_data, leader_ppg = as.numeric(leader_ppg))
-    temp_data$top_scorer_prop <- temp_data$leader_ppg / temp_data$team_ppg
-    temp_data <- temp_data[complete.cases(temp_data),c(3:5)]
+#     #Adds year column, calculates point_diff colum, removes score columns, rearranges columns, and removes excess rows
+#     temp_data$year <- y
+#     temp_data$team <- t
+#     temp_data <- transform(temp_data, team_ppg = as.numeric(team_ppg))
+#     temp_data <- transform(temp_data, leader_ppg = as.numeric(leader_ppg))
+#     temp_data$top_scorer_prop <- temp_data$leader_ppg / temp_data$team_ppg
+#     temp_data <- temp_data[complete.cases(temp_data),c(3:5)]
     
-    #Adds year's data to the overall data.frame
-    leading_scorers <- rbind(leading_scorers, temp_data)
-  }
-}
+#     #Adds year's data to the overall data.frame
+#     leading_scorers <- rbind(leading_scorers, temp_data)
+#   }
+# }
 
 
 
