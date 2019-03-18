@@ -6,18 +6,45 @@ setwd('C:/Users/student/Documents/March-Madness-Prediction-in-R')
 #Constants
 years <- c(2002:2018)
 team_data_names <- c('year', 'team', 'adj_eff_margin', 'adj_off_eff', 'adj_def_eff', 'pos_per_40', 'luck', 'sos', 'opp_adj_off_eff', 'opp_adj_def_eff')
-matchups_names <- c('team', 'score1', 'opponent', 'score2')
+matchups_names <- c('year', 'team', 'opponent', 'point_diff')
+temp_matchups_names <- c('team', 'score1', 'opponent', 'score2')
 scorer_names <- c('team_ppg', 'leader_ppg')
 
 
 
 ###TEAM DATA###
 
-#Initializes data.frame into which data will be scraped
-team_data <- NULL
+#Initializes data.frame into which data will be scraped and pre-allocates data storage for efficiency
+a <- numeric(10000)
+b <- character(10000)
+c <- numeric(10000)
+d <- numeric(10000)
+e <- numeric(10000)
+f <- numeric(10000)
+g <- numeric(10000)
+h <- numeric(10000)
+j <- numeric(10000)
+k <- numeric(10000)
+for(i in 1:(10000)){
+  a[i] <- i
+  b[i] <- toString(i)
+  c[i] <- i
+  d[i] <- i
+  e[i] <- i
+  f[i] <- i
+  g[i] <- i
+  h[i] <- i
+  j[i] <- i
+  k[i] <- i
+}
+team_data <- data.frame(a, b, c, d, e, f, g, h, j, k, stringsAsFactors = FALSE)
+names(team_data) <- team_data_names
+
+#Sets endpoints for each data.frame
+team_data_end <- 1
 
 #Scrapes data into data.frame
-for(y in years){
+for(y in c(years, 2019)){
   #Builds link and gets html code
   link <- paste0('http://kenpom.com/index.php?y=', y)
   download.file(link, destfile = 'scraped_page.html', quiet=TRUE)
@@ -53,18 +80,37 @@ for(y in years){
   
   
   #Adds year's data to the overall data.frame
-  team_data <- rbind(team_data, temp_data)
+  team_data[team_data_end:(team_data_end + nrow(temp_data) - 1),] <- temp_data
+  team_data_end <- team_data_end + nrow(temp_data)
 }
-
-#Adds table headers
-names(team_data) <- team_data_names
+team_data <- team_data[1:(team_data_end - 1),]
 
 
 
-###FIRST ROUND MATCHUPS###
 
-#Initializes data.frame into which data will be scraped
-first_round_matchups <- NULL
+
+###MATCHUPS###
+
+#Initializes data.frame into which data will be scraped and pre-allocates data storage for efficiency
+a <- numeric(1500)
+b <- character(1500)
+c <- character(1500)
+d <- numeric(1500)
+for(i in 1:(1500)){
+  a[i] <- i
+  b[i] <- toString(i)
+  c[i] <- toString(i)
+  d[i] <- i
+}
+matchups <- data.frame(a, b, c, d, stringsAsFactors = FALSE)
+names(matchups) <- matchups_names
+
+#Initializes vector in which sports-refence team names will be stored
+sports_reference_names <- as.character(c(1:1000))
+
+#Sets endpoints for the data.frame and vector
+matchups_end <- 1
+sports_reference_names_end <- 1
 
 #Scrapes data into data.frame
 for (y in years){
@@ -74,27 +120,36 @@ for (y in years){
   webpage <- read_html('scraped_page.html')
   
   #Reads first round matchups and their scores, converts them to text, and converts the resultant character vector to a data.frame
-  temp_data_html <- html_nodes(webpage, '.round:nth-child(1) div div a')
+  temp_data_html <- html_nodes(webpage, '.round div+ div div a , .winner+ div a , .winner a , #east p a , #midwest p a , #south p a ,
+                               #west p a , #southeast p a , #southwest p a , #minneapolis p a , #atlanta p a , #oakland p a ,
+                               #washington p a , #syracuse p a , #albuquerque p a , #austin p a , #chicago p a , #stlouis p a ,
+                               #eastrutherford p a , #phoenix p a , .winner+ div a , .round:nth-child(1) div div a ,
+                               .round:nth-child(2) div div a , .round:nth-child(3) div div a , .round:nth-child(4) div div a ,
+                               strong a')
   temp_data <- html_text(temp_data_html)
   temp_data <- data.frame(temp_data, stringsAsFactors = FALSE)
-  
+
   #Rearranges values from 1 column to 4 columns and adds names
   for(i in c(0:(nrow(temp_data) - 1))){
     temp_data[(i %/% 4) + 1, (i %% 4) + 1] <- temp_data[i + 1, 1]
   }
-  names(temp_data) <- matchups_names
+  names(temp_data) <- temp_matchups_names
   
   #Adds year column, calculates point_diff colum, removes score columns, rearranges columns, and removes excess rows
+  temp_data <- temp_data[complete.cases(temp_data),]
   temp_data$year <- y
   temp_data <- transform(temp_data, score1 = as.numeric(score1))
   temp_data <- transform(temp_data, score2 = as.numeric(score2))
   temp_data$point_diff <- temp_data$score1 - temp_data$score2
-  temp_data <- temp_data[complete.cases(temp_data),c(5, 1, 3, 6)]
-  temp_data <- temp_data[-c(33, 34),]
+  temp_data <- temp_data[, c(5, 1, 3, 6)]
   
-  #Standardizes team names
+  #Standardizes team names and records sports-reference names
   for(i in c(1:nrow(temp_data))){
     for(j in c(2,3)){
+      if(!(temp_data[i, j] %in% sports_reference_names)){
+        sports_reference_names[sports_reference_names_end] <- tolower(temp_data[i, j])
+        sports_reference_names_end <- sports_reference_names_end + 1
+      }
       temp_data[i, j] <- sub('-', ' ', temp_data[i, j])
       temp_data[i, j] <- sub('State', 'St.', temp_data[i, j])
       temp_data[i, j] <- sub('NC St.', 'North Carolina St.', temp_data[i, j])
@@ -109,6 +164,7 @@ for (y in years){
       temp_data[i, j] <- sub('Loyola IL', 'Loyola Chicago', temp_data[i, j])
       temp_data[i, j] <- sub('Ole Miss', 'Mississippi', temp_data[i, j])
       temp_data[i, j] <- sub('Pitt', 'Pittsburgh', temp_data[i, j])
+      temp_data[i, j] <- sub('Prairie View', 'Prairie View A&M', temp_data[i, j])
       temp_data[i, j] <- sub('Southeastern Louisiana Lafayette', 'Southeastern Louisiana', temp_data[i, j])
       temp_data[i, j] <- sub('St. Joseph', 'Saint Joseph', temp_data[i, j])
       temp_data[i, j] <- sub('St. Peter', 'Saint Peter', temp_data[i, j])
@@ -122,65 +178,49 @@ for (y in years){
   }
   
   #Adds year's data to the overall data.frame
-  first_round_matchups <- rbind(first_round_matchups, temp_data)
+  matchups[matchups_end:(matchups_end + nrow(temp_data) - 1),] <- temp_data
+  matchups_end <- matchups_end + nrow(temp_data)
 }
+matchups <- matchups[1:(matchups_end - 1),]
 
 
 
 
-###2018 EXTENSION###
 
-#Assigns link and gets html code
-link <- 'https://www.sports-reference.com/cbb/postseason/2018-ncaa.html'
-download.file(link, destfile = 'scraped_page.html', quiet=TRUE)
-webpage <- read_html('scraped_page.html')
+# ###COACHING CONSISTENCY###
+# #Initializes data.frame into which data will be scraped
+# coaching_consistency <- NULL
 
-#Reads remaining matchups for 2018 and their scores, converts them to text, and converts the resultant character vector to a data.frame
-extension_2018_html <- html_nodes(webpage, '.round+ .round .winner+ div a , .round+ .round .winner a')
-extension_2018 <- html_text(extension_2018_html)
-extension_2018 <- data.frame(extension_2018, stringsAsFactors = FALSE)
-
-#Rearranges values from 1 column to 4 columns and adds names
-for(i in c(0:(nrow(extension_2018) - 1))){
-  extension_2018[(i %/% 4) + 1, (i %% 4) + 1] <- extension_2018[i + 1, 1]
-}
-names(extension_2018) <- matchups_names
-
-#Adds year column, calculates point_diff colum, removes score columns, rearranges columns, and removes excess rows
-extension_2018$year <- y
-extension_2018 <- transform(extension_2018, score1 = as.numeric(score1))
-extension_2018 <- transform(extension_2018, score2 = as.numeric(score2))
-extension_2018$point_diff <- extension_2018$score1 - extension_2018$score2
-extension_2018 <- extension_2018[complete.cases(extension_2018),c(5, 1, 3, 6)]
-
-#Standardizes team names
-for(i in c(1:nrow(extension_2018))){
-  for(j in c(2,3)){
-    extension_2018[i, j] <- sub('-', ' ', extension_2018[i, j])
-    extension_2018[i, j] <- sub('State', 'St\\.', extension_2018[i, j])
-    extension_2018[i, j] <- sub('NC St\\.', 'North Carolina St\\.', extension_2018[i, j])
-    extension_2018[i, j] <- sub('UNC$', 'North Carolina', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Alabama Birmingham$', 'UAB', extension_2018[i, j])
-    extension_2018[i, j] <- sub(' \\(NY\\)', '', extension_2018[i, j])
-    extension_2018[i, j] <- sub('ETSU', 'East Tennessee St.', extension_2018[i, j])
-    extension_2018[i, j] <- sub('^Little Rock', 'Arkansas Little Rock', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Louisiana', 'Louisiana Lafayette', extension_2018[i, j])
-    extension_2018[i, j] <- sub('\\(', '', extension_2018[i, j])
-    extension_2018[i, j] <- sub('\\)', '', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Loyola IL', 'Loyola Chicago', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Ole Miss', 'Mississippi', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Pitt', 'Pittsburgh', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Southeastern Louisiana Lafayette', 'Southeastern Louisiana', extension_2018[i, j])
-    extension_2018[i, j] <- sub('St. Joseph', 'Saint Joseph', extension_2018[i, j])
-    extension_2018[i, j] <- sub('St. Peter', 'Saint Peter', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Texas Arlington', 'UT Arlington', extension_2018[i, j])
-    extension_2018[i, j] <- sub('Texas A&M Corpus Christi', 'Texas A&M Corpus Chris', extension_2018[i, j])
-    extension_2018[i, j] <- sub('UConn', 'Connecticut', extension_2018[i, j])
-    extension_2018[i, j] <- sub('UCSB', 'UC Santa Barbara', extension_2018[i, j])
-    extension_2018[i, j] <- sub('UIC', 'Illinois Chicago', extension_2018[i, j])
-    extension_2018[i, j] <- sub('UMass', 'Massachusetts', extension_2018[i, j])
-  }
-}
+# #Scrapes data into data.frame
+# for(y in years){
+#   for(t in sports_reference_names){
+#     #Builds link and gets html code
+#     t <- gsub(' ', '-', t)
+#     t <- gsub('\\.', '', t)
+#     t <- gsub('\\(', '', t)
+#     t <- gsub('\\)', '', t)
+#     t <- gsub("\\'", '', t)
+#     t <- gsub('-st$', '-state', t)
+#     t <- gsub('cal-st', 'cal-state', t)
+#     t <- gsub('penn', 'pennsylvania', t)
+#     t <- gsub('^nc', 'north-carolina', t)
+#     t <- gsub('unc', 'north-carolina', t)
+#     t <- gsub('uconn', 'connecticut', t)
+#     t <- gsub('usc', 'southern-california', t)
+#     t <- gsub('pitt', 'pittsburgh', t)
+#     link <- paste0('https://www.sports-reference.com/cbb/schools/', t, '/', y, '.html')
+#     download.file(link, destfile = 'scraped_page.html', quiet=TRUE)
+#     webpage <- read_html('scraped_page.html')
+    
+#     #Initializes coaches data.frame
+#     coaches <- NULL
+    
+#     #Reads coach names, converts them to text, adds them to the coaches data.frame
+#     temp_data_html <- html_nodes(webpage, 'p~ p+ p a')
+#     temp_data <- html_text(temp_data_html)
+#     temp_data <- data.frame(temp_data, stringsAsFactors = FALSE)
+#   }
+# }
 
 
 
@@ -271,5 +311,4 @@ for(i in c(1:nrow(extension_2018))){
 
 ###WRITE TO CSV###
 write.csv(team_data, 'team_data.csv', row.names = FALSE)
-write.csv(first_round_matchups, 'first_round_matchups.csv', row.names = FALSE)
-write.csv(extension_2018, 'extension_2018.csv', row.names = FALSE)
+write.csv(matchups, 'matchups.csv', row.names = FALSE)
