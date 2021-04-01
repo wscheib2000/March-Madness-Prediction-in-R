@@ -1,7 +1,10 @@
 library(rvest)
+library(mgsub)
+library(tidyr)
+library(rstudioapi)
 
 #Sets working directory
-setwd('C:/Users/student/Documents/March-Madness-Prediction-in-R')
+setwd(dirname(getActiveDocumentContext()$path))
 
 #Constants
 years <- c(2002:2018)
@@ -10,40 +13,28 @@ matchups_names <- c('year', 'team', 'opponent', 'point_diff')
 temp_matchups_names <- c('team', 'score1', 'opponent', 'score2')
 scorer_names <- c('team_ppg', 'leader_ppg')
 
+#Data cleaning functions
+key <- read.csv("key.txt", stringsAsFactors = FALSE, header = FALSE)
+standardize_teams <- function(team){
+  if(!(temp_data[i, j] %in% sports_reference_names)){
+    sports_reference_names[sports_reference_names_end] <- tolower(temp_data[i, j])
+    sports_reference_names_end <- sports_reference_names_end + 1
+  }
+  return(mgsub(team, key[1,], key[2,]))
+}
 
 
 ###TEAM DATA###
 
 #Initializes data.frame into which data will be scraped and pre-allocates data storage for efficiency
-a <- numeric(10000)
-b <- character(10000)
-c <- numeric(10000)
-d <- numeric(10000)
-e <- numeric(10000)
-f <- numeric(10000)
-g <- numeric(10000)
-h <- numeric(10000)
-j <- numeric(10000)
-k <- numeric(10000)
-for(i in 1:(10000)){
-  a[i] <- i
-  b[i] <- toString(i)
-  c[i] <- i
-  d[i] <- i
-  e[i] <- i
-  f[i] <- i
-  g[i] <- i
-  h[i] <- i
-  j[i] <- i
-  k[i] <- i
-}
-team_data <- data.frame(a, b, c, d, e, f, g, h, j, k, stringsAsFactors = FALSE)
+team_data <- data.frame(rep(1,10000), rep("1",10000), rep(1,10000), rep(1,10000), rep(1,10000), rep(1,10000), 
+                        rep(1,10000), rep(1,10000), rep(1,10000), rep(1,10000), stringsAsFactors = FALSE)
 names(team_data) <- team_data_names
 
-#Sets endpoints for each data.frame
+#Sets endpoint for team_data
 team_data_end <- 1
 
-#Scrapes data into data.frame
+#Scrapes data into team_data
 for(y in c(years, 2019)){
   #Builds link and gets html code
   link <- paste0('http://kenpom.com/index.php?y=', y)
@@ -126,10 +117,15 @@ for (y in years){
                                #eastrutherford p a , #phoenix p a , .winner+ div a , .round:nth-child(1) div div a ,
                                .round:nth-child(2) div div a , .round:nth-child(3) div div a , .round:nth-child(4) div div a ,
                                strong a')
-  temp_data <- html_text(temp_data_html)
-  temp_data <- data.frame(temp_data, stringsAsFactors = FALSE)
+  temp_data <- html_text(temp_data_html) %>% data.frame(stringsAsFactors = FALSE)
 
-  #Rearranges values from 1 column to 4 columns and adds names
+  #Rearranges values from 1 column to 4 columns and adds names (trying to problem solve a better way to do this)
+  temp_data2<-data.frame(matrix(ncol = 4, nrow = 1))
+  sapply(seq(0, nrow(temp_data) - 1), (function(i) temp_data2[(i %/% 4) + 1, (i %% 4) + 1] <- temp_data[i + 1, 1]))
+  
+  temp_data$names <- rep(temp_matchups_names, length.out = nrow(temp_data))
+  spread(temp_data, names, 2)
+  
   for(i in c(0:(nrow(temp_data) - 1))){
     temp_data[(i %/% 4) + 1, (i %% 4) + 1] <- temp_data[i + 1, 1]
   }
@@ -144,38 +140,8 @@ for (y in years){
   temp_data <- temp_data[, c(5, 1, 3, 6)]
   
   #Standardizes team names and records sports-reference names
-  for(i in c(1:nrow(temp_data))){
-    for(j in c(2,3)){
-      if(!(temp_data[i, j] %in% sports_reference_names)){
-        sports_reference_names[sports_reference_names_end] <- tolower(temp_data[i, j])
-        sports_reference_names_end <- sports_reference_names_end + 1
-      }
-      temp_data[i, j] <- sub('-', ' ', temp_data[i, j])
-      temp_data[i, j] <- sub('State', 'St.', temp_data[i, j])
-      temp_data[i, j] <- sub('NC St.', 'North Carolina St.', temp_data[i, j])
-      temp_data[i, j] <- sub('UNC$', 'North Carolina', temp_data[i, j])
-      temp_data[i, j] <- sub('Alabama Birmingham$', 'UAB', temp_data[i, j])
-      temp_data[i, j] <- sub(' \\(NY\\)', '', temp_data[i, j])
-      temp_data[i, j] <- sub('ETSU', 'East Tennessee St.', temp_data[i, j])
-      temp_data[i, j] <- sub('^Little Rock', 'Arkansas Little Rock', temp_data[i, j])
-      temp_data[i, j] <- sub('Louisiana', 'Louisiana Lafayette', temp_data[i, j])
-      temp_data[i, j] <- sub('\\(', '', temp_data[i, j])
-      temp_data[i, j] <- sub('\\)', '', temp_data[i, j])
-      temp_data[i, j] <- sub('Loyola IL', 'Loyola Chicago', temp_data[i, j])
-      temp_data[i, j] <- sub('Ole Miss', 'Mississippi', temp_data[i, j])
-      temp_data[i, j] <- sub('Pitt', 'Pittsburgh', temp_data[i, j])
-      temp_data[i, j] <- sub('Prairie View', 'Prairie View A&M', temp_data[i, j])
-      temp_data[i, j] <- sub('Southeastern Louisiana Lafayette', 'Southeastern Louisiana', temp_data[i, j])
-      temp_data[i, j] <- sub('St. Joseph', 'Saint Joseph', temp_data[i, j])
-      temp_data[i, j] <- sub('St. Peter', 'Saint Peter', temp_data[i, j])
-      temp_data[i, j] <- sub('Texas Arlington', 'UT Arlington', temp_data[i, j])
-      temp_data[i, j] <- sub('Texas A&M Corpus Christi', 'Texas A&M Corpus Chris', temp_data[i, j])
-      temp_data[i, j] <- sub('UConn', 'Connecticut', temp_data[i, j])
-      temp_data[i, j] <- sub('UCSB', 'UC Santa Barbara', temp_data[i, j])
-      temp_data[i, j] <- sub('UIC', 'Illinois Chicago', temp_data[i, j])
-      temp_data[i, j] <- sub('UMass', 'Massachusetts', temp_data[i, j])
-    }
-  }
+  temp_data[,2] <- sapply(temp_data[,2], standardize_teams)
+  temp_data[,3] <- sapply(temp_data[,3], standardize_teams)
   
   #Adds year's data to the overall data.frame
   matchups[matchups_end:(matchups_end + nrow(temp_data) - 1),] <- temp_data
